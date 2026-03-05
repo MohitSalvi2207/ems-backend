@@ -21,6 +21,7 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'https://ems-frontend-peach.vercel.app',
+    'https://employeemanagementsystem-zeta-six.vercel.app',
     process.env.CLIENT_URL
 ].filter(Boolean);
 
