@@ -16,10 +16,17 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// Allowed origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.CLIENT_URL || 'https://ems-frontend-peach.vercel.app'
+].filter(Boolean);
+
 // Socket.io setup
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:5173', 'http://localhost:3000'],
+        origin: allowedOrigins,
         credentials: true
     }
 });
@@ -32,7 +39,7 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());

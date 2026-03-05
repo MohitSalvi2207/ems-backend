@@ -13,17 +13,21 @@ const generateRefreshToken = (userId) => {
 };
 
 const setTokenCookies = (res, accessToken, refreshToken) => {
-    res.cookie('accessToken', accessToken, {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProduction,           // true on Render (HTTPS), false on localhost
+        sameSite: isProduction ? 'none' : 'lax', // 'none' required for cross-origin (Vercel→Render)
+    };
+
+    res.cookie('accessToken', accessToken, {
+        ...cookieOptions,
         maxAge: 15 * 60 * 1000 // 15 minutes
     });
 
     res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 };

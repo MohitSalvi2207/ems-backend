@@ -1,23 +1,24 @@
 const ActivityLog = require('../models/ActivityLog');
 
 const logActivity = (action, module = 'system') => {
-    return async (req, res, next) => {
-        // Store original json method
-        const originalJson = res.json.bind(res);
-
-        res.json = function (data) {
-            // Only log successful operations
-            if (data.success !== false) {
-                ActivityLog.create({
-                    user: req.user ? req.user._id : null,
-                    action,
-                    details: `${req.method} ${req.originalUrl}`,
-                    module,
-                    ipAddress: req.ip || req.connection.remoteAddress
-                }).catch(err => console.error('Activity log error:', err));
+    return (req, res, next) => {
+        // Hook into response finish event - never blocks or crashes the request
+        res.on('finish', () => {
+            try {
+                // Only log successful responses (2xx status codes)
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    ActivityLog.create({
+                        user: req.user ? req.user._id : null,
+                        action,
+                        details: `${req.method} ${req.originalUrl}`,
+                        module,
+                        ipAddress: req.ip || req.socket?.remoteAddress
+                    }).catch(err => console.error('Activity log error:', err));
+                }
+            } catch (err) {
+                console.error('Activity log error:', err);
             }
-            return originalJson(data);
-        };
+        });
 
         next();
     };
