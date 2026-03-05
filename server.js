@@ -20,14 +20,35 @@ const server = http.createServer(app);
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    process.env.CLIENT_URL || 'https://ems-frontend-peach.vercel.app'
+    'https://ems-frontend-peach.vercel.app',
+    process.env.CLIENT_URL
 ].filter(Boolean);
+
+console.log('Allowed CORS origins:', allowedOrigins);
+
+// CORS options
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    optionsSuccessStatus: 200
+};
 
 // Socket.io setup
 const io = new Server(server, {
     cors: {
         origin: allowedOrigins,
-        credentials: true
+        credentials: true,
+        methods: ['GET', 'POST']
     }
 });
 
@@ -37,11 +58,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware
-app.use(cors({
-    origin: allowedOrigins,
-    credentials: true
-}));
+// Middleware - handle preflight for all routes
+app.options('/{*splat}', cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
