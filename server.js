@@ -16,22 +16,32 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// Allowed origins
+// Allowed origins - exact matches
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://ems-frontend-peach.vercel.app',
-    'https://employeemanagementsystem-zeta-six.vercel.app',
     process.env.CLIENT_URL
 ].filter(Boolean);
 
+// Pattern-based origins - Vercel generates different URLs per deployment
+const allowedPatterns = [
+    /\.vercel\.app$/,  // Allow all Vercel deployments
+];
+
 console.log('Allowed CORS origins:', allowedOrigins);
+
+// Check if origin is allowed
+function isOriginAllowed(origin) {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    if (allowedPatterns.some(pattern => pattern.test(origin))) return true;
+    return false;
+}
 
 // CORS options
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, curl, etc.)
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (isOriginAllowed(origin)) {
             callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);
@@ -47,7 +57,13 @@ const corsOptions = {
 // Socket.io setup
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: function (origin, callback) {
+            if (isOriginAllowed(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
         methods: ['GET', 'POST']
     }
