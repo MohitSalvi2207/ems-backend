@@ -20,21 +20,28 @@ const server = http.createServer(app);
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
+    'https://employeemanagementsystem-zeta-six.vercel.app', // Production Vercel URL
     process.env.CLIENT_URL
 ].filter(Boolean);
 
 // Pattern-based origins - Vercel generates different URLs per deployment
 const allowedPatterns = [
-    /\.vercel\.app$/,  // Allow all Vercel deployments
+    /^https?:\/\/.*\.vercel\.app$/,       // All Vercel deployments
+    /^https?:\/\/localhost(:\d+)?$/,       // All localhost ports
 ];
 
 console.log('Allowed CORS origins:', allowedOrigins);
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Check if origin is allowed
 function isOriginAllowed(origin) {
+    // Allow requests with no origin (e.g., mobile apps, curl, Postman)
     if (!origin) return true;
+    // Check exact match list
     if (allowedOrigins.includes(origin)) return true;
+    // Check pattern list
     if (allowedPatterns.some(pattern => pattern.test(origin))) return true;
+    console.log('CORS blocked origin:', origin);
     return false;
 }
 
@@ -44,13 +51,13 @@ const corsOptions = {
         if (isOriginAllowed(origin)) {
             callback(null, true);
         } else {
-            console.log('CORS blocked origin:', origin);
-            callback(new Error('Not allowed by CORS'));
+            callback(new Error(`CORS: origin '${origin}' not allowed`));
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
     optionsSuccessStatus: 200
 };
 
