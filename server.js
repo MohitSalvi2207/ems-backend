@@ -21,12 +21,14 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'https://employeemanagementsystem-zeta-six.vercel.app', // Production Vercel URL
+    'https://ems-backend-2-lr0z.onrender.com',             // Production Render backend URL
     process.env.CLIENT_URL
 ].filter(Boolean);
 
 // Pattern-based origins - Vercel generates different URLs per deployment
 const allowedPatterns = [
     /^https?:\/\/.*\.vercel\.app$/,       // All Vercel deployments
+    /^https?:\/\/.*\.onrender\.com$/,     // All Render deployments
     /^https?:\/\/localhost(:\d+)?$/,       // All localhost ports
 ];
 
